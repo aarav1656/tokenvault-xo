@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TokenVault on XO: BCH BLAZE 2026 presentation</title>
+<meta name="description" content="Fungible CashTokens released by block height, the reward halving every period, every move an XO invitation">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fcfcfd;--ink:#16181d;--mut:#555b6b;--acc:#2a3fd6;--rule:#dcdfe6;--ibg:#2a3fd6;--iink:#ffffff;--iacc:#ffffff;--imut:#cfd6ff}
+*{box-sizing:border-box}html{scroll-snap-type:y mandatory;scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 clamp(16px,1.5vw,21px)/1.5 Archivo,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.mono,code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.82em}
+.s{min-height:100vh;min-height:100dvh;scroll-snap-align:start;display:grid;grid-template-rows:auto 1fr;padding:clamp(20px,4vw,56px) clamp(20px,7vw,112px) clamp(84px,9vw,112px);border-bottom:1px solid var(--rule)}
+.s.inv{background:var(--ibg);color:var(--iink);border-color:transparent}
+.meta{display:flex;justify-content:space-between;margin:0;font:500 12px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.inv .meta{color:var(--imut)}
+.body{align-self:center;max-width:1100px;width:100%}
+h1{font:800 clamp(34px,5.6vw,76px)/1.02 Archivo,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.025em;margin:0 0 clamp(18px,3vw,40px)}
+h1.big{font-size:clamp(48px,11vw,150px);line-height:.95;letter-spacing:-.035em;margin-bottom:.25em}
+.kick{font:500 12px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--iacc);margin:0 0 20px}
+.tag{font-size:clamp(20px,2.6vw,34px);line-height:1.25;max-width:26em;margin:0 0 28px;color:var(--imut)}
+.who{margin:0 0 6px}.lnk{margin:0}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--acc)}.inv a{text-decoration-color:var(--iacc)}
+a:hover,a:focus-visible{color:var(--acc)}.inv a:hover,.inv a:focus-visible{color:var(--iacc)}
+.lead{font-size:clamp(18px,2.1vw,28px);line-height:1.4;max-width:34em;margin:0 0 clamp(16px,2.4vw,32px)}
+.items{list-style:none;margin:0;padding:0;counter-reset:i;max-width:46em}
+.items li{counter-increment:i;display:grid;grid-template-columns:3.2em 1fr;gap:0 8px;padding:.7em 0;border-top:1px solid var(--rule);font-size:clamp(16px,1.7vw,23px);line-height:1.35}
+.items li:last-child{border-bottom:1px solid var(--rule)}
+.items li::before{content:counter(i,decimal-leading-zero);font:500 .62em/2.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--acc)}
+.facts{margin:0;max-width:52em}.facts div{display:grid;grid-template-columns:minmax(10em,16em) 1fr;gap:6px 20px;padding:.6em 0;border-top:1px solid var(--rule);align-items:baseline}
+.facts div:last-child{border-bottom:1px solid var(--rule)}
+.facts dt{font:500 12px/1.3 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}.facts dd{margin:0;overflow-wrap:anywhere}
+.lk{list-style:none;margin:0;padding:0;font-size:clamp(16px,1.8vw,24px)}.lk li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:.55em 0;border-top:1px solid #ffffff33}
+.lk span{font:500 12px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--imut);min-width:7.5em}.lk code{overflow-wrap:anywhere}
+button,.nav a{font:500 13px/1 ui-monospace,"SF Mono",Menlo,monospace;color:inherit;background:transparent;border:1px solid currentColor;padding:8px 12px;cursor:pointer;text-decoration:none}
+button:hover,button:focus-visible{color:var(--acc)}.inv button:hover{color:var(--iacc)}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px clamp(16px,4vw,48px);background:color-mix(in srgb,var(--bg) 92%,transparent);border-top:1px solid var(--rule);color:var(--ink);backdrop-filter:blur(6px)}
+.nav .grp{display:flex;gap:8px;align-items:center}.nav output{font:500 13px/1 ui-monospace,"SF Mono",Menlo,monospace;min-width:5em;text-align:center}
+.nav.on-inv{background:color-mix(in srgb,var(--ibg) 92%,transparent);color:var(--iink);border-color:#ffffff33}
+@media(max-width:640px){.facts div{grid-template-columns:1fr}.meta span:last-child{display:none}.nav .home{display:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.nav{display:none}.s{min-height:auto;height:100vh;break-after:page}html{scroll-snap-type:none}}
+</style></head><body>
+<main><section class="s s-title inv" id="s1" aria-label="Slide 1 of 6"><p class="meta"><span>01 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><p class="kick">BCH BLAZE 2026</p><h1 class="big">TokenVault on XO</h1><p class="tag">Fungible CashTokens released by block height, the reward halving every period, every move an XO invitation</p><p class="who">Team aarav1656</p><p class="lnk"><a href="https://github.com/aarav1656/tokenvault-xo" rel="noopener">github.com/aarav1656/tokenvault-xo</a></p></div></section>
+<section class="s s-story" id="s2" aria-label="Slide 2 of 6"><p class="meta"><span>02 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><h1>The Story of TokenVault on XO</h1><p class="lead">foldingcash/smart-contracts ships TokenVault in CashScript: a covenant that releases fungible CashTokens by block height while the reward halves every period. Each release needed a JavaScript script to compute the next state. We migrated it to an XO template. The two original contracts are embedded unchanged, and the template itself computes the halving schedule and the next state NFT commitment. Every transaction is an XO invitation that blaze.xo.cash inspects.</p></div></section>
+<section class="s s-list" id="s3" aria-label="Slide 3 of 6"><p class="meta"><span>03 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><h1>Benefits of TokenVault on XO</h1><ol class="items"><li>The template computes the halving schedule and the next state commitment, no side script</li><li>Original TokenVault_Mint and TokenVault_Release bodies embedded, addresses equal the CashScript SDK</li><li>Seven actions with follow-ups: fundMint, mint, prepareFeeCoin, release, finalRelease, reclaim, sweep</li><li>Open any transaction in blaze.xo.cash as an invitation, template id 833cf84d9673...</li><li>54 tests on the BCH 2026 VM, each guard has a negative test that names the rejecting contract line</li><li>MUTANT=commitment, signer, payout or locktime switches one guard off and the tests turn red</li></ol></div></section>
+<section class="s s-bch" id="s4" aria-label="Slide 4 of 6"><p class="meta"><span>04 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><h1>BCH Usage</h1><p class="lead">Fungible CashTokens sit in a P2SH32 covenant next to a state NFT, and every release is bound to block height by its locktime. Chipnet lifecycle, vault of 60 tokens: 4 releases, locked 60, released 60, read back from Electrum by scripts/verify.mjs.</p><dl class="facts"><div><dt>Template id</dt><dd><span class="mono">833cf84d9673…7aa4dd29</span></dd></div><div><dt>02-mint</dt><dd><a class="mono" href="https://chipnet.imaginary.cash/tx/20320be70b0183c8b44f2d87dfdaff4b5c05d0d2cce698f37b62afb1f0c4ba09" rel="noopener" title="20320be70b0183c8b44f2d87dfdaff4b5c05d0d2cce698f37b62afb1f0c4ba09">20320be70b…f0c4ba09</a></dd></div><div><dt>04-release</dt><dd><a class="mono" href="https://chipnet.imaginary.cash/tx/f33b40dac8b000b3559202fb2f938e61d92c5883990c17d2767728c5c0679bfa" rel="noopener" title="f33b40dac8b000b3559202fb2f938e61d92c5883990c17d2767728c5c0679bfa">f33b40dac8…c0679bfa</a></dd></div><div><dt>08-release, crosses a halving</dt><dd><a class="mono" href="https://chipnet.imaginary.cash/tx/d714226848aeb54122ab12a5c94ab096baf877b5647dd5e9a8eaf07a0f9607f0" rel="noopener" title="d714226848aeb54122ab12a5c94ab096baf877b5647dd5e9a8eaf07a0f9607f0">d714226848…0f9607f0</a></dd></div><div><dt>10-finalRelease</dt><dd><a class="mono" href="https://chipnet.imaginary.cash/tx/8030cc9a1cb270d0516f6b0ad1074697b16f42408dc754edb6eb1b8eabda9eca" rel="noopener" title="8030cc9a1cb270d0516f6b0ad1074697b16f42408dc754edb6eb1b8eabda9eca">8030cc9a1c…abda9eca</a></dd></div></dl></div></section>
+<section class="s s-vision" id="s5" aria-label="Slide 5 of 6"><p class="meta"><span>05 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><h1>The Vision for TokenVault on XO</h1><p class="lead">Token schedules become templates that anyone can open, step and verify in blaze.xo.cash.</p><ol class="items"><li>Abstraction increases: the contract, its math and its follow-ups live in one template</li><li>Next priority -&gt; more of the foldingcash contracts as XO templates</li><li>Target: every CashTokens release schedule inspectable invitation by invitation</li></ol></div></section>
+<section class="s s-thanks inv" id="s6" aria-label="Slide 6 of 6"><p class="meta"><span>06 / 06</span><span>www.bchblaze.cash</span></p><div class="body"><h1 class="big">THANK YOU!</h1><ul class="lk"><li><span>Source</span><a href="https://github.com/aarav1656/tokenvault-xo" rel="noopener">github.com/aarav1656/tokenvault-xo</a></li><li><span>Live</span><a href="https://tokenvault-xo.vercel.app" rel="noopener">tokenvault-xo.vercel.app</a></li><li><span>Slides</span><a href="/deck.pdf">tokenvault-xo.vercel.app/deck.pdf</a></li><li><span>EMBER2026</span><code id="ad">bitcoincash:zqxpyg7vz2xkcmd3pkuw3jpjs2gehsmh3ypxkxvjnm</code><button type="button" id="cp">Copy</button></li></ul></div></section></main>
+<nav class="nav" id="nav" aria-label="Slides"><div class="grp"><button type="button" id="prev" aria-label="Previous slide">Prev</button><output id="pos" aria-live="polite">1 / 6</output><button type="button" id="next" aria-label="Next slide">Next</button></div><div class="grp"><a class="home" href="/">Open the app</a><a href="/deck.pdf">PDF</a></div></nav>
+<script>(function(){var s=[].slice.call(document.querySelectorAll('.s')),n=s.length,i=0,pos=document.getElementById('pos'),nav=document.getElementById('nav');
+function go(k){k=Math.max(0,Math.min(n-1,k));s[k].scrollIntoView();}
+function upd(k){i=k;pos.textContent=(k+1)+' / '+n;nav.classList.toggle('on-inv',s[k].classList.contains('inv'));history.replaceState(null,'','#'+(k+1));}
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)upd(s.indexOf(e.target))})},{threshold:.55});s.forEach(function(x){io.observe(x)});
+document.getElementById('prev').onclick=function(){go(i-1)};document.getElementById('next').onclick=function(){go(i+1)};
+addEventListener('keydown',function(e){if(e.target.closest&&e.target.closest('button,a'))if(e.key===' '||e.key==='Enter')return;
+var k={ArrowRight:i+1,ArrowDown:i+1,PageDown:i+1,' ':e.shiftKey?i-1:i+1,ArrowLeft:i-1,ArrowUp:i-1,PageUp:i-1,Home:0,End:n-1}[e.key];if(k===undefined||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();go(k)});
+var h=parseInt(location.hash.slice(1),10);if(h>1&&h<=n){s[h-1].scrollIntoView({behavior:'instant'})}
+var cp=document.getElementById('cp');cp.onclick=function(){var t=document.getElementById('ad').textContent,d=function(){cp.textContent='Copied';setTimeout(function(){cp.textContent='Copy'},1600)};navigator.clipboard?navigator.clipboard.writeText(t).then(d,d):d()};})();</script>
+</body></html>
