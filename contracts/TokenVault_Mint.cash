@@ -1,0 +1,76 @@
+pragma cashscript >=0.9.3;
+
+/// <summary>
+///     Mint the token and state for a token mining contract
+/// </summary>
+/// <param name="fund">The address used to supply and auth the contract</param>
+contract TokenVault_Mint(
+    pubkey fund,
+) {
+    /// <summary>
+    ///     Spend UTXOs with no restrictions
+    /// </summary>
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
+    function spend(sig signature) {
+        // validate parameters
+        require(checkSig(signature, fund));
+    }
+
+    /// <summary>
+    ///     Mint a new token with state object for a token mining contract
+    /// </summary>
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
+    /// <param name="amount">The amount of tokens to mint</param>
+    /// <param name="lockAmount">The amount of tokens that'll be locked in the mining contract</param>
+    /// <param name="blockHeight">The block height the token mining will start</param>
+    /// <param name="reward">The initial token reward per block</param>
+    /// <inputs>
+    ///     <i0>Funding input</i0>
+    /// </inputs>
+    /// <outputs>
+    ///     <o0>Create tokens</o0>
+    ///     <o1>Create state</o1>
+    ///     <o2>Return change to fund w/ any unlocked tokens</o2>
+    /// </outputs>
+    function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
+        // parameter validation
+        require(checkSig(signature, fund));
+        require(amount > 0);
+        require(lockAmount > 0);
+        require(amount >= lockAmount);
+        require(within(blockHeight, 0, 500000000 + 1));
+        require(within(reward, 1, lockAmount + 1));
+
+        // verify inputs
+        require(tx.inputs.length == 1);
+        require(tx.inputs[0].tokenCategory == 0x);
+        
+        // verify outputs
+        require(tx.outputs.length == 3);
+        
+        // verify token output        
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[0].tokenAmount == lockAmount);
+
+        // verify state output
+        require(tx.outputs[1].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[1].nftCommitment == bytes8(blockHeight) + bytes8(blockHeight) + bytes8(reward));
+
+        // verify change output
+        bytes25 fundLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
+        require(tx.outputs[2].lockingBytecode == fundLockingBytecode);
+        require(tx.outputs[2].nftCommitment == 0x);
+
+        // verify token change output
+        int tokenChange = max(amount - lockAmount, 0);
+        if(tokenChange > 0) {
+            require(tx.outputs[2].tokenCategory == tx.inputs[0].outpointTransactionHash);
+            require(tx.outputs[2].tokenAmount == tokenChange);
+        } else {
+            require(tx.outputs[2].tokenCategory == 0x);
+        }
+    }
+}
+
+// bytecode
+// OP_OVER OP_0 OP_NUMEQUAL OP_IF OP_ROT OP_SWAP OP_CHECKSIG OP_NIP OP_ELSE OP_SWAP OP_1 OP_NUMEQUALVERIFY OP_SWAP OP_OVER OP_CHECKSIGVERIFY OP_OVER OP_0 OP_GREATERTHAN OP_VERIFY OP_2 OP_PICK OP_0 OP_GREATERTHAN OP_VERIFY OP_OVER OP_3 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_3 OP_PICK OP_0 0065cd1d OP_1ADD OP_WITHIN OP_VERIFY OP_4 OP_PICK OP_1 OP_4 OP_PICK OP_1ADD OP_WITHIN OP_VERIFY OP_TXINPUTCOUNT OP_1 OP_NUMEQUALVERIFY OP_0 OP_UTXOTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_TXOUTPUTCOUNT OP_3 OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_0 OP_OUTPOINTTXHASH OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_3 OP_PICK OP_NUMEQUALVERIFY OP_1 OP_OUTPUTTOKENCATEGORY OP_0 OP_OUTPOINTTXHASH OP_EQUALVERIFY OP_1 OP_OUTPUTTOKENCOMMITMENT OP_4 OP_PICK OP_8 OP_NUM2BIN OP_5 OP_ROLL OP_8 OP_NUM2BIN OP_CAT OP_5 OP_ROLL OP_8 OP_NUM2BIN OP_CAT OP_EQUALVERIFY 76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_2 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_2 OP_OUTPUTTOKENCOMMITMENT OP_0 OP_EQUALVERIFY OP_SWAP OP_SUB OP_0 OP_MAX OP_DUP OP_0 OP_GREATERTHAN OP_IF OP_2 OP_OUTPUTTOKENCATEGORY OP_0 OP_OUTPOINTTXHASH OP_EQUALVERIFY OP_2 OP_OUTPUTTOKENAMOUNT OP_OVER OP_NUMEQUALVERIFY OP_ELSE OP_2 OP_OUTPUTTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_ENDIF OP_DROP OP_1 OP_ENDIF

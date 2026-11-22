@@ -1,0 +1,14 @@
+import { openEngine, toAddress } from '../lib/xo.mjs';
+import { runAction, waitFor, outpoint } from '../lib/flow.mjs';
+const network = 'chipnet';
+const { engine, templateIdentifier } = await openEngine(network);
+const lb = await engine.generateLockingBytecodeFromDefaultPolicy('receive');
+console.log('wallet', toAddress(network, lb));
+const utxo = await waitFor(async () => (await engine.listSpendableUnspentOutputs())[0], 'wallet utxo');
+console.log('utxo', JSON.stringify(utxo, (k, v) => (typeof v === 'bigint' ? v.toString() : v)));
+const template = await engine.getTemplate(templateIdentifier);
+const intent = template.start.find((i) => i.action === 'fundMint');
+const r = await runAction(engine, { templateIdentifier, action: 'fundMint', intent, variables: [{ variableIdentifier: 'mintSatoshis', value: 6000n }], inputs: [outpoint(utxo)], outputs: ['mintFundingOutput'], change: true, broadcast: false, verbose: true });
+console.log(JSON.stringify(r.preview, (k, v) => (typeof v === 'bigint' ? v.toString() : v)).slice(0, 1500));
+await engine.stop().catch(() => {});
+process.exit(0);

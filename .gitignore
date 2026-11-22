@@ -1,0 +1,7 @@
+.env
+.env.*
+node_modules/
+dist/
+.progress/
+*.sqlite
+.xo-data/

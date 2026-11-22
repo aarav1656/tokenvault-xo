@@ -1,0 +1,122 @@
+pragma cashscript >=0.9.3;
+
+/// <summary>
+///     Create a token release contract that follows a half-life algorithm
+/// </summary>
+/// <param name="fund">The receiving fund</param>
+/// <param name="halvingLength">The number of blocks between halvings</param>
+contract TokenVault_Release(
+    pubkey fund,
+    int halvingLength,
+) {
+    /// <summary>
+    ///     Release the tokens up to the current block height or halving event which ever comes first
+    /// </summary>
+    /// <notes>
+    ///     If the halving event occurred between last release and current block then call this function multiple times to release all available funds
+    /// </notes>
+    /// <param name="signature">Fund's signature</param>
+    /// <param name="blockHeight">Block height to release up to</param>
+    /// <inputs>
+    ///     <i0>The token's UTXO</i0>
+    ///     <i1>The state object</i1>
+    ///     <i2>Transaction fee funding</i2>
+    /// </inputs>
+    /// <outputs>
+    ///     <o0>Send tokens to fund</o0>
+    ///     <o1>Return i0 back to contract unless EOL</o1>
+    ///     <o2>The state object unless EOL</o2>
+    /// </outputs>
+    function release(sig signature, int blockHeight) {
+        // auth
+        require(checkSig(signature, fund));
+
+        // function input validation
+        require(blockHeight >= 0);
+        require(tx.time >= blockHeight); // ensure blockHeight is at most the current height
+
+        // validate UTXO inputs
+        require(tx.inputs.length == 3);
+        // token and NFT should be from same transaction
+        require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
+        // ensure transaction fee input doesn't have other tokens or nfts
+        require(tx.inputs[2].tokenCategory == 0x);
+
+        // get state
+        bytes state = tx.inputs[1].nftCommitment;
+
+        // raw state validation
+        require(state.length == (8 * 3));
+
+        // split state
+        bytes releaseHeight_state, bytes rest = state.split(8);
+        bytes halvingHeight_state, bytes reward_state = rest.split(8);
+        
+        // type state
+        int releaseHeight = int(releaseHeight_state);
+        int halvingHeight = int(halvingHeight_state);
+        int reward = int(reward_state);
+
+        // validate typed state
+        require(releaseHeight >= 0);
+        require(halvingHeight >= 0);
+        require(releaseHeight >= halvingHeight);
+        require(reward > 0);
+        require(within(halvingLength, 1, 500000000 + 1));
+
+        // ensure blocks have been produced to release more
+        require(tx.time >= releaseHeight);
+        require(blockHeight >= releaseHeight);
+
+        // declare next state
+        int releaseHeight_next = blockHeight;
+        int halvingHeight_next = halvingHeight;
+        int reward_next = reward;
+
+        // start logic
+        int minedBlocksSinceLastRelease = blockHeight - releaseHeight + 1;
+        int releaseAmount = minedBlocksSinceLastRelease * reward;
+
+        // check for halving event; release height will stop at halving height
+        int minedBlocksSinceHalving = blockHeight - halvingHeight + 1;
+        if (minedBlocksSinceHalving >= halvingLength) {
+            releaseHeight_next = halvingHeight + halvingLength;
+            halvingHeight_next = releaseHeight_next;
+            reward_next = max(reward / 2, 1); // don't let it go to zero, a minimum of one token per block
+
+            // stop the release at the halving at most
+            minedBlocksSinceLastRelease = releaseHeight_next - releaseHeight;
+            releaseAmount = minedBlocksSinceLastRelease * reward;
+        }
+
+        // calculate token change
+        int changeAmount = tx.inputs[0].tokenAmount - releaseAmount;
+        
+        // validate UTXO outputs
+        if (changeAmount <= 0) { // EOL
+            require(tx.outputs.length == 1);
+            require(tx.outputs[0].tokenAmount == tx.inputs[0].tokenAmount);
+        } else { // normal release
+            require(tx.outputs.length == 3);
+
+            // Check that the released amount is sent to the fund
+            require(tx.outputs[0].tokenAmount == releaseAmount);
+
+            // Send the change token amount w/ updated state back to the same smart contract locking bytecode
+            require(tx.outputs[1].tokenAmount == changeAmount);
+            require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode); 
+            require(tx.outputs[1].tokenCategory == tx.inputs[0].tokenCategory);
+
+            require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode); // Send the nft commitment to contract locking bytecode
+            require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next)); // Updated state check
+        }
+
+        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
+        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode); // ensure release is to the fund
+        require(tx.outputs[0].nftCommitment == 0x);
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);
+    }
+}
+
+// bytecode
+// OP_ROT OP_OVER OP_CHECKSIGVERIFY OP_2 OP_PICK OP_0 OP_GREATERTHANOREQUAL OP_VERIFY OP_2 OP_PICK OP_CHECKLOCKTIMEVERIFY OP_DROP OP_TXINPUTCOUNT OP_3 OP_NUMEQUALVERIFY OP_0 OP_OUTPOINTTXHASH OP_1 OP_OUTPOINTTXHASH OP_EQUALVERIFY OP_2 OP_UTXOTOKENCATEGORY OP_0 OP_EQUALVERIFY OP_1 OP_UTXOTOKENCOMMITMENT OP_DUP OP_SIZE OP_NIP OP_8 OP_3 OP_MUL OP_NUMEQUALVERIFY OP_8 OP_SPLIT OP_8 OP_SPLIT OP_ROT OP_BIN2NUM OP_ROT OP_BIN2NUM OP_ROT OP_BIN2NUM OP_2 OP_PICK OP_0 OP_GREATERTHANOREQUAL OP_VERIFY OP_OVER OP_0 OP_GREATERTHANOREQUAL OP_VERIFY OP_2 OP_PICK OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_DUP OP_0 OP_GREATERTHAN OP_VERIFY OP_4 OP_PICK OP_1 0065cd1d OP_1ADD OP_WITHIN OP_VERIFY OP_2 OP_PICK OP_CHECKLOCKTIMEVERIFY OP_DROP OP_5 OP_PICK OP_3 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_5 OP_PICK OP_2 OP_PICK OP_2 OP_PICK OP_8 OP_PICK OP_6 OP_PICK OP_SUB OP_1ADD OP_DUP OP_5 OP_PICK OP_MUL OP_10 OP_ROLL OP_7 OP_PICK OP_SUB OP_1ADD OP_10 OP_PICK OP_GREATERTHANOREQUAL OP_IF OP_6 OP_PICK OP_10 OP_PICK OP_ADD OP_5 OP_ROLL OP_DROP OP_SWAP OP_TOALTSTACK OP_SWAP OP_TOALTSTACK OP_SWAP OP_TOALTSTACK OP_SWAP OP_FROMALTSTACK OP_FROMALTSTACK OP_FROMALTSTACK OP_4 OP_PICK OP_4 OP_ROLL OP_DROP OP_SWAP OP_TOALTSTACK OP_SWAP OP_TOALTSTACK OP_SWAP OP_FROMALTSTACK OP_FROMALTSTACK OP_5 OP_PICK OP_2 OP_DIV OP_1 OP_MAX OP_3 OP_ROLL OP_DROP OP_SWAP OP_TOALTSTACK OP_SWAP OP_FROMALTSTACK OP_4 OP_PICK OP_8 OP_PICK OP_SUB OP_ROT OP_DROP OP_SWAP OP_OVER OP_6 OP_PICK OP_MUL OP_NIP OP_ENDIF OP_0 OP_UTXOTOKENAMOUNT OP_OVER OP_SUB OP_DUP OP_0 OP_LESSTHANOREQUAL OP_IF OP_TXOUTPUTCOUNT OP_1 OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_0 OP_UTXOTOKENAMOUNT OP_NUMEQUALVERIFY OP_ELSE OP_TXOUTPUTCOUNT OP_3 OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENAMOUNT OP_2 OP_PICK OP_NUMEQUALVERIFY OP_1 OP_OUTPUTTOKENAMOUNT OP_OVER OP_NUMEQUALVERIFY OP_1 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUALVERIFY OP_1 OP_OUTPUTTOKENCATEGORY OP_0 OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_2 OP_OUTPUTBYTECODE OP_0 OP_UTXOBYTECODE OP_EQUALVERIFY OP_2 OP_OUTPUTTOKENCOMMITMENT OP_6 OP_PICK OP_8 OP_NUM2BIN OP_6 OP_PICK OP_8 OP_NUM2BIN OP_CAT OP_5 OP_PICK OP_8 OP_NUM2BIN OP_CAT OP_EQUALVERIFY OP_ENDIF 76a914 OP_10 OP_ROLL OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENCOMMITMENT OP_0 OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_0 OP_UTXOTOKENCATEGORY OP_EQUALVERIFY OP_2DROP OP_2DROP OP_2DROP OP_2DROP OP_2DROP OP_1
