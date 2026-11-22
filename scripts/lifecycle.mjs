@@ -72,7 +72,8 @@ const expectedPaid = [];
 for (let n = 1; tokens > 0n; n++) {
   const { rh, hh, rw } = parse(commitment);
   const height = BigInt((await engine.getChainStatus()).currentHeight);
-  const bh = hh + P.halvingLength - 1n <= height ? hh + P.halvingLength - 1n : height;
+  // release 1 stops short of the halving (the plain branch), every later one runs to the end of its halving period
+  const bh = n === 1 ? rh + 1n : (hh + P.halvingLength - 1n <= height ? hh + P.halvingLength - 1n : height);
   const halving = bh - hh + 1n >= P.halvingLength;
   const amount = halving ? (hh + P.halvingLength - rh) * rw : (bh - rh + 1n) * rw;
   const eol = tokens - amount <= 0n;
@@ -101,7 +102,7 @@ for (let n = 1; tokens > 0n; n++) {
     outputs: eol ? ['finalPayout'] : ['releasePayout', 'releaseVaultTokens', 'releaseVaultState'],
   });
   const paid = await waitFor(() => at(rel.txid, 0), 'payout');
-  console.log('release', n, 'height', bh, 'halving', halving, 'amount', amount, 'paid', paid.tokenAmount, 'eol', eol);
+  console.log('release', n, 'up to height', bh, halving ? 'crosses a halving' : 'plain release', 'amount', amount, 'paid', paid.tokenAmount, 'eol', eol);
   if (BigInt(paid.tokenAmount) !== (eol ? tokens : amount)) throw new Error('paid amount differs from the schedule');
   expectedPaid.push(BigInt(paid.tokenAmount));
   if (eol) break;

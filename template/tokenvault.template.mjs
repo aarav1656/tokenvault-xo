@@ -12,6 +12,8 @@ const TOKEN = '$(<tokenCategory>)';
 // TokenVault_Mint and TokenVault_Release read the state NFT category as a plain 32 byte hash, so the state NFT has no capability
 // byte: it is immutable, and every release mints the next one (a genesis on the fee coin, which must be output 0 of its transaction).
 const IMMUTABLE = 'none';
+// What the fund can do next with any output locked to the vault. Declared on the vault outputs and on the locking script.
+const VAULT_NEXT = [{ action: 'release', role: 'fund', secrets: [{ fundKey: null }] }, { action: 'finalRelease', role: 'fund', secrets: [{ fundKey: null }] }];
 
 const fundRole = (variables = []) => ({ fund: { requirements: { variables, secrets: ['fundKey'] } } });
 const oneFund = { participants: [{ role: 'fund', slots: { min: 1, max: 1 } }] };
@@ -143,11 +145,11 @@ export const tokenVaultTemplate = {
   outputs: {
     mintFundingOutput: { ...view('Mint coin', 'Satoshis locked to the TokenVault_Mint covenant.', 'vault'), lockingScript: 'mintContract', valueSatoshis: '$(<mintSatoshis>)', token: null },
     mintVaultTokens: {
-      ...view('Vault tokens', 'The supply locked in the vault.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST),
+      ...view('Vault tokens', 'The supply locked in the vault.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST), actions: VAULT_NEXT,
       token: { category: TOKEN, amount: '$(<lockAmount>)', nft: null },
     },
     mintVaultState: {
-      ...view('Vault state', 'The first state NFT.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST),
+      ...view('Vault state', 'The first state NFT.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST), actions: VAULT_NEXT,
       token: { category: TOKEN, amount: null, nft: { capability: IMMUTABLE, commitment: '$(mintStateHex)' } },
     },
     mintChange: { ...view('Change', 'The rest of the mint coin back to the fund wallet.', 'fund'), lockingScript: 'fundWallet', valueSatoshis: '$(<mintCoinSatoshis> <2000> OP_SUB <minerFee> OP_SUB)', token: null },
@@ -156,11 +158,11 @@ export const tokenVaultTemplate = {
       token: { category: TOKEN, amount: '$(releaseAmount)', nft: null },
     },
     releaseVaultTokens: {
-      ...view('Vault tokens', 'The tokens still locked.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST),
+      ...view('Vault tokens', 'The tokens still locked.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST), actions: VAULT_NEXT,
       token: { category: TOKEN, amount: '$(<vaultTokens> releaseAmount OP_SUB)', nft: null },
     },
     releaseVaultState: {
-      ...view('Vault state', 'The next state NFT, computed by the template.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST),
+      ...view('Vault state', 'The next state NFT, computed by the template.', 'vault'), lockingScript: 'vault', valueSatoshis: String(DUST), actions: VAULT_NEXT,
       token: { category: '$(<nextStateCategory>)', amount: null, nft: { capability: IMMUTABLE, commitment: '$(nextStateHex)' } },
     },
     finalPayout: {
@@ -176,7 +178,12 @@ export const tokenVaultTemplate = {
   lockingScripts: {
     fundWallet: {
       ...view('Fund wallet', 'Pay to public key hash of the fund key.', 'fund'), lockingType: 'p2pkh', lockingBytecode: 'fundLock', unlockingBytecode: 'fundUnlock',
-      roles: { fund: { state: { secrets: ['fundKey'] }, balance: { satoshis: true, fungibleTokens: true, nonfungibleTokens: true }, selectable: true } },
+      roles: {
+        fund: {
+          state: { secrets: ['fundKey'] }, balance: { satoshis: true, fungibleTokens: true, nonfungibleTokens: true }, selectable: true,
+          actions: ['fundMint', 'prepareFeeCoin', 'sweep'].map((action) => ({ action, role: 'fund', generate: ['fundKey'] })),
+        },
+      },
     },
     mintContract: {
       ...view('TokenVault_Mint', 'The original mint covenant: one genesis input, three outputs, tokens locked as the fund chooses.', 'vault'), lockingType: 'p2sh', lockingBytecode: 'mintRedeem',
@@ -193,7 +200,7 @@ export const tokenVaultTemplate = {
       roles: {
         fund: {
           state: { secrets: ['fundKey'] }, selectable: false, balance: { satoshis: 0n, fungibleTokens: 0n, nonfungibleTokens: 0 },
-          actions: [{ action: 'release', role: 'fund', secrets: [{ fundKey: null }] }, { action: 'finalRelease', role: 'fund', secrets: [{ fundKey: null }] }],
+          actions: VAULT_NEXT,
         },
       },
     },
