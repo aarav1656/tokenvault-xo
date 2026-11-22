@@ -26,11 +26,13 @@ const bigCoin = async () => (await plain()).sort((a, b) => b.valueSatoshis - a.v
 if (network === 'chipnet' && !(await bigCoin())) console.log('faucet', (await requestChipnetSats(toAddress(network, lb), 3000000)).txid);
 const funded = await waitFor(bigCoin, 'wallet funds', 60000);
 
-const step = async (name, p) => {
+let seq = 0;
+const step = async (label, p) => {
+  const name = String(++seq).padStart(2, '0') + '-' + label;
   const r = await runAction(engine, { templateIdentifier, broadcast: true, ...p });
   saveInvitation(OUT, name, r.invitation);
   console.log(name, 'txid', r.txid, 'bytes', r.preview.transactionByteLength);
-  if (stopAfter === name) { await engine.stop().catch(() => {}); process.exit(0); }
+  if (stopAfter === label) { await engine.stop().catch(() => {}); process.exit(0); }
   return r;
 };
 const startIntent = (a) => template.start.find((i) => i.action === a);
@@ -40,7 +42,7 @@ const le8 = (n) => { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(n)); r
 const parse = (h) => { const b = Buffer.from(h, 'hex'); return { rh: b.readBigUInt64LE(0), hh: b.readBigUInt64LE(8), rw: b.readBigUInt64LE(16) }; };
 
 // 1. fund the mint covenant: its output 0 becomes the token genesis
-const fm = await step('01-fundMint', {
+const fm = await step('fundMint', {
   action: 'fundMint', intent: startIntent('fundMint'),
   variables: [{ variableIdentifier: 'mintSatoshis', value: P.mintSatoshis }],
   inputs: [outpoint(funded)], outputs: ['mintFundingOutput'], change: true,
@@ -52,7 +54,7 @@ let change = await waitFor(() => at(category, 1), 'fundMint change');
 // 2. mint: create the category, lock the supply in the vault, first state NFT
 const tip = (await engine.getChainStatus()).currentHeight;
 const startHeight = BigInt(tip) - P.startBack;
-const mt = await step('02-mint', {
+const mt = await step('mint', {
   action: 'mint', intent: followUp('mintContract', 'mint'),
   variables: [
     { variableIdentifier: 'tokenCategory', value: category }, { variableIdentifier: 'lockAmount', value: P.lockAmount },
@@ -80,7 +82,7 @@ for (let n = 1; tokens > 0n; n++) {
   const next = halving ? { rh: hh + P.halvingLength, hh: hh + P.halvingLength, rw: rw / 2n > 0n ? rw / 2n : 1n } : { rh: bh, hh, rw };
   const nextCommitment = le8(next.rh) + le8(next.hh) + le8(next.rw);
 
-  const pf = await step(String(n).padStart(2, '0') + '-prepareFeeCoin', {
+  const pf = await step('prepareFeeCoin', {
     action: 'prepareFeeCoin', intent: { action: 'prepareFeeCoin', role: 'fund', generate: ['fundKey'] },
     variables: [{ variableIdentifier: 'coinSatoshis', value: P.coinSatoshis }], inputs: [outpoint(change)], outputs: ['walletCoin'], change: true,
   });
@@ -88,7 +90,7 @@ for (let n = 1; tokens > 0n; n++) {
   change = await waitFor(() => at(pf.txid, 1), 'fee coin change');
 
   const action = eol ? 'finalRelease' : 'release';
-  const rel = await step(String(n).padStart(2, '0') + '-' + action, {
+  const rel = await step(action, {
     action, intent: followUp('vault', action), locktime: Number(bh),
     variables: [
       { variableIdentifier: 'tokenCategory', value: category }, { variableIdentifier: 'stateCategory', value: stateCategory },
