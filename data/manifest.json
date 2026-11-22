@@ -1,0 +1,99 @@
+{
+  "template": {
+    "file": "tokenvault.template.json",
+    "identifier": "833cf84d9673303502e916f0a305753c4ada691d0e2c106ec4afec717aa4dd29"
+  },
+  "networks": {
+    "chipnet": {
+      "vault": {
+        "category": "c682993d77ae3f6db5407b982b2c47e21e82ac3a26b0c6b4a5ea8746eb0cf923",
+        "lockAmount": "60",
+        "reward": "8",
+        "halvingLength": "4",
+        "startHeight": "300183"
+      },
+      "transactions": [
+        {
+          "file": "01-fundMint.xo.json",
+          "dir": "chipnet",
+          "action": "fundMint",
+          "txid": "c682993d77ae3f6db5407b982b2c47e21e82ac3a26b0c6b4a5ea8746eb0cf923"
+        },
+        {
+          "file": "02-mint.xo.json",
+          "dir": "chipnet",
+          "action": "mint",
+          "txid": "20320be70b0183c8b44f2d87dfdaff4b5c05d0d2cce698f37b62afb1f0c4ba09"
+        },
+        {
+          "file": "03-prepareFeeCoin.xo.json",
+          "dir": "chipnet",
+          "action": "prepareFeeCoin",
+          "txid": "0fa0b54a0ce8b67dd3527b53eb2d159123ec5d814f3ee202db8a236ffc606f54"
+        },
+        {
+          "file": "04-release.xo.json",
+          "dir": "chipnet",
+          "action": "release",
+          "txid": "f33b40dac8b000b3559202fb2f938e61d92c5883990c17d2767728c5c0679bfa"
+        },
+        {
+          "file": "05-prepareFeeCoin.xo.json",
+          "dir": "chipnet",
+          "action": "prepareFeeCoin",
+          "txid": "97baa7eac9a49e0230c86f631ae2273e0698f53d5683b2f58bc91df8af6cb16f"
+        },
+        {
+          "file": "06-release.xo.json",
+          "dir": "chipnet",
+          "action": "release",
+          "txid": "6e1ab13be926379df2ef341d332bebbe9519426bab8567ecf588d0417387c240"
+        },
+        {
+          "file": "07-prepareFeeCoin.xo.json",
+          "dir": "chipnet",
+          "action": "prepareFeeCoin",
+          "txid": "8b6ea3c0a543858b7c763e6ef23c7a496f196a3a1de7102eadc4f67e05ca8286"
+        },
+        {
+          "file": "08-release.xo.json",
+          "dir": "chipnet",
+          "action": "release",
+          "txid": "d714226848aeb54122ab12a5c94ab096baf877b5647dd5e9a8eaf07a0f9607f0"
+        },
+        {
+          "file": "09-prepareFeeCoin.xo.json",
+          "dir": "chipnet",
+          "action": "prepareFeeCoin",
+          "txid": "2cc2e46ffff3fb516d1dcac9b777d0906a5b0399bce4c3286383b3035d4f37f8"
+        },
+        {
+          "file": "10-finalRelease.xo.json",
+          "dir": "chipnet",
+          "action": "finalRelease",
+          "txid": "8030cc9a1cb270d0516f6b0ad1074697b16f42408dc754edb6eb1b8eabda9eca"
+        }
+      ],
+      "recovery": [
+        {
+          "file": "1-fundMint.xo.json",
+          "dir": "chipnet-recover",
+          "action": "fundMint",
+          "txid": "e61c5e83150efb9de38ffd01fdeae0460d8e992395bc2c723dcc7585367318ec"
+        },
+        {
+          "file": "2-reclaim.xo.json",
+          "dir": "chipnet-recover",
+          "action": "reclaim",
+          "txid": "ef474dc3f6ed915ca685f8707f92812352e0cc764d94b0c86fe72dea9a1d4a2b"
+        },
+        {
+          "file": "3-sweep.xo.json",
+          "dir": "chipnet-recover",
+          "action": "sweep",
+          "txid": "6c550f94ebda08f74204dcff44d9a20856ebfab6f2754925c49c47b3443ea8f0"
+        }
+      ]
+    }
+  }
+}
