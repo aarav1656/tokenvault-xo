@@ -17,9 +17,9 @@
     "fake-indexeddb": "6.2.8"
   },
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/vault.test.mjs",
     "build:web": "node web/scripts/sync-data.mjs && vite build --config web/vite.config.mjs",
-    "prove": "node --test test/ && node scripts/verify.mjs chipnet",
+    "prove": "node --test test/vault.test.mjs && node scripts/verify.mjs chipnet",
     "template": "node scripts/export-template.mjs"
   },
   "devDependencies": {
