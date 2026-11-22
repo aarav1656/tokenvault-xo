@@ -2,6 +2,19 @@
 
 A scheduled token vault as an XO template. Fungible CashTokens sit in a covenant next to a state NFT. The fund releases tokens up to the current block height, the reward halves every period, and the vault ends when the last token is out. The template computes the halving schedule and the next state NFT commitment, and every transaction is an XO invitation that blaze.xo.cash inspects.
 
+**Live demo:** https://tokenvault-xo.vercel.app · **Deck:** https://tokenvault-xo.vercel.app/deck/
+
+![60 tokens locked, 60 released across 4 releases, read from chipnet in the browser](submission/01-hero.png)
+
+| | |
+|---|---|
+| ![Ten chipnet transactions, each an XO invitation](submission/02-proof.png) | ![Live chain readback: every release checked against the template](submission/03-readback.png) |
+| ![The template prices a release schedule in the browser](submission/04-calculator.png) | ![Original CashScript beside the seven XO actions](submission/05-migrated.png) |
+
+![One release, step by step](submission/flow.png)
+
+![System map: contracts, XO engine, Electrum, chipnet, readers](submission/architecture.png)
+
 Migrated from [foldingcash/smart-contracts TokenVault](https://github.com/foldingcash/smart-contracts) (CashScript). The two original contracts, TokenVault_Mint and TokenVault_Release, are embedded unchanged: the template's redeem scripts are the constructor arguments plus the compiled bodies of the project's own artifacts, so every vault address equals the CashScript build for the same arguments.
 
 Engine: `@xo-cash/engine@0.1.1-next.18230317763` (npm dist-tag next). Template id: `833cf84d9673303502e916f0a305753c4ada691d0e2c106ec4afec717aa4dd29`.
