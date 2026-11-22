@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenVault on XO: live proof and calculator</title>
+<meta name="description" content="Fungible CashTokens locked in a covenant and released by block height, every move an XO invitation. Read the transactions from the chain in your browser and price a release schedule with the template's own scripts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script type="module" src="/src/main.js"></script>
+</head>
+<body>
+<a class="skip" href="#proof">skip to the proof</a>
+
+<header class="top">
+  <div class="shell top__row">
+    <a class="mark" href="#top">tokenvault<i class="sq" aria-hidden="true"></i></a>
+    <nav class="top__nav" aria-label="outside links">
+      <a href="https://blaze.xo.cash" rel="noopener">open blaze.xo.cash</a>
+      <a href="https://github.com/foldingcash/smart-contracts" rel="noopener">original contracts</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="band hero" aria-labelledby="claim">
+  <div class="shell">
+    <h1 class="display" id="claim">tokens that pay out by the block<i class="sq" aria-hidden="true"></i></h1>
+    <div class="hero__grid">
+      <div class="hero__text">
+        <p class="lead">TokenVault locks fungible CashTokens in a covenant beside a state NFT. The fund releases up to the current block height, the reward halves every period, and the XO template computes the next state. Every move is an XO invitation that blaze.xo.cash opens.</p>
+        <div class="netswitch" id="netSwitch" role="group" aria-label="network" hidden></div>
+        <dl class="figs" aria-live="polite">
+          <div class="fig"><dt>tokens locked</dt><dd id="figLocked">…</dd></div>
+          <div class="fig"><dt>tokens released</dt><dd id="figReleased">…</dd></div>
+          <div class="fig"><dt>releases</dt><dd id="figReleases">…</dd></div>
+        </dl>
+        <p class="status" id="heroStatus" role="status">Reading the chain from your browser.</p>
+        <ol class="index" aria-label="on this page">
+          <li><a href="#proof"><span class="index__n">01</span><span class="index__t">proof</span><span class="index__d">every transaction as an XO invitation to paste into blaze.xo.cash</span></a></li>
+          <li><a href="#readback"><span class="index__n">02</span><span class="index__t">live readback</span><span class="index__d">your browser reads each transaction from an Electrum server and checks it</span></a></li>
+          <li><a href="#calculator"><span class="index__n">03</span><span class="index__t">calculator</span><span class="index__d">the template's own scripts price a release schedule you choose</span></a></li>
+          <li><a href="#migrated"><span class="index__n">04</span><span class="index__t">migrated</span><span class="index__d">the original CashScript beside the seven XO actions</span></a></li>
+        </ol>
+      </div>
+      <figure class="hero__chart">
+        <div class="chart" id="heroChart" role="img" aria-label="Vault balance falling by release, by block height"></div>
+        <figcaption id="heroCaption">Tokens left in the vault after each release, by block height. Ticks mark each halving.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="proof" aria-labelledby="proofTitle">
+  <div class="shell">
+    <span class="band__num" data-n="01" aria-hidden="true"></span>
+    <div class="bandhead">
+      <h2 id="proofTitle">every step is an invitation<i class="sq" aria-hidden="true"></i></h2>
+      <p>A row is one transaction of the vault's life, in order. Its invitation file holds the signed commits that built it. The template file holds the scripts. blaze.xo.cash rebuilds the transaction from the two.</p>
+    </div>
+    <ol class="steps">
+      <li><span class="steps__n">1</span><h3>Import Template</h3><p>Copy the template JSON. In <a href="https://blaze.xo.cash" rel="noopener">blaze.xo.cash</a> choose Import Template and paste it.</p></li>
+      <li><span class="steps__n">2</span><h3>Join Invitation</h3><p>Copy any invitation JSON from the table. Choose Join Invitation and paste it. blaze lists the inputs, the outputs and the state NFT.</p></li>
+      <li><span class="steps__n">3</span><h3>Inspect Transaction</h3><p>Or paste a txid into Inspect Transaction to see the same transaction as the chain holds it.</p></li>
+    </ol>
+    <div id="proofNets"></div>
+  </div>
+</section>
+
+<section class="band" id="readback" aria-labelledby="readTitle">
+  <div class="shell">
+    <span class="band__num" data-n="02" aria-hidden="true"></span>
+    <div class="bandhead">
+      <h2 id="readTitle">the chain agrees<i class="sq" aria-hidden="true"></i></h2>
+      <p>Your browser opens a WebSocket to a public Electrum server, asks for every raw transaction and its merkle proof, decodes the bytes with libauth and re-checks the vault's rules. The invitation files supply the txids and the vault's constructor arguments. Every amount and state below comes from the chain.</p>
+    </div>
+    <div id="readNets"></div>
+  </div>
+</section>
+
+<section class="band plate panel" id="calculator" aria-labelledby="calcTitle">
+  <div class="shell">
+    <span class="band__num" data-n="03" aria-hidden="true"></span>
+    <div class="bandhead">
+      <h2 id="calcTitle">the template does the math<i class="sq" aria-hidden="true"></i></h2>
+      <p>Four inputs. Every amount, halving test and next state NFT in the table is evaluated by the template's own scripts (releaseAmount, halvingNow, nextStateHex) with compileCashAssemblyString in this page, the call the XO engine makes. The page chooses only the block height each release runs to: the end of the current halving period.</p>
+    </div>
+    <form class="fields" id="calcForm" autocomplete="off" novalidate>
+      <label class="field"><span>tokens locked</span><input id="inLock" name="lock" inputmode="numeric" value="60" aria-describedby="calcErr"></label>
+      <label class="field"><span>reward per block</span><input id="inReward" name="reward" inputmode="numeric" value="8" aria-describedby="calcErr"></label>
+      <label class="field"><span>blocks per halving</span><input id="inHalving" name="hl" inputmode="numeric" value="4" aria-describedby="calcErr"></label>
+      <label class="field"><span>start height</span><input id="inStart" name="start" inputmode="numeric" value="300183" aria-describedby="calcErr"></label>
+    </form>
+    <p class="calc__err" id="calcErr" role="alert" hidden></p>
+    <div class="calc__tools"><button class="btn btn--paper" type="button" id="calcReset" hidden>use the vault read from the chain</button></div>
+    <div class="chart calc__chart" id="calcChart" role="img" aria-label="Release schedule from the calculator"></div>
+    <p class="calc__sum" id="calcSum" role="status">Evaluating the template.</p>
+    <div class="sched__wrap">
+      <table class="sched">
+        <thead><tr><th scope="col">#</th><th scope="col">up to height</th><th scope="col" class="num">amount</th><th scope="col">next state commitment <span class="hexkey">release height, halving height, reward</span></th><th scope="col" class="num">tokens left</th><th scope="col">end of life</th></tr></thead>
+        <tbody id="calcRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="migrated" aria-labelledby="migTitle">
+  <div class="shell">
+    <span class="band__num" data-n="04" aria-hidden="true"></span>
+    <div class="bandhead">
+      <h2 id="migTitle">migrated, not rewritten<i class="sq" aria-hidden="true"></i></h2>
+      <p>The two CashScript contracts are embedded unchanged, so every vault address equals the CashScript build for the same arguments. XO adds the actions, the roles and the arithmetic that writes the next state NFT.</p>
+    </div>
+    <div class="pair">
+      <div class="pair__a">
+        <h3 class="label">original CashScript</h3>
+        <ul class="funcs" id="origFuncs"></ul>
+        <div id="origSrc"></div>
+      </div>
+      <div class="pair__b">
+        <h3 class="label">XO template actions</h3>
+        <ol class="acts" id="xoActs"></ol>
+      </div>
+    </div>
+    <h3 class="label files__h">where it lives in the repo</h3>
+    <ul class="files">
+      <li><code>contracts/TokenVault_Mint.cash</code><span>original mint covenant</span></li>
+      <li><code>contracts/TokenVault_Release.cash</code><span>original release covenant</span></li>
+      <li><code>contracts/bodies.mjs</code><span>compiled bodies embedded in the template</span></li>
+      <li><code>template/tokenvault.template.mjs</code><span>the XO template source</span></li>
+      <li><code>template/tokenvault.template.json</code><span>the template blaze.xo.cash imports</span></li>
+      <li><code>scripts/lifecycle.mjs</code><span>runs the lifecycle through the engine</span></li>
+      <li><code>scripts/verify.mjs</code><span>the readback checks, in Node</span></li>
+      <li><code>invitations/chipnet/</code><span>the invitation files listed above</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="shell foot__row">
+    <p class="mark">tokenvault<i class="sq" aria-hidden="true"></i></p>
+    <ul class="foot__links">
+      <li><a href="https://blaze.xo.cash" rel="noopener">blaze.xo.cash</a></li>
+      <li><a href="https://github.com/foldingcash/smart-contracts" rel="noopener">foldingcash/smart-contracts</a></li>
+      <li><a href="https://bchblaze.cash" rel="noopener">BCH BLAZE</a></li>
+    </ul>
+    <p class="foot__meta data">template <span id="footTemplate">833cf84d9673303502e916f0a305753c4ada691d0e2c106ec4afec717aa4dd29</span> · engine @xo-cash/engine 0.1.1-next.18230317763</p>
+  </div>
+</footer>
+
+</body>
+</html>

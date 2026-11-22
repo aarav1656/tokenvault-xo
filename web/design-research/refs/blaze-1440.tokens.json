@@ -1,0 +1,65 @@
+{
+ "title": "XO Cash",
+ "h1": null,
+ "h2": null,
+ "h3": null,
+ "body": {
+  "text": "The XO Stack is in active development. Any available code is",
+  "font": "Inter, -apple-system, \"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif",
+  "size": "16px",
+  "weight": "400",
+  "tracking": "normal",
+  "leading": "24px",
+  "color": "rgb(233, 236, 242)",
+  "bg": "rgb(11, 13, 18)",
+  "radius": "0px",
+  "padding": "0px",
+  "border": "0px none rgb(233, 236, 242)",
+  "transform": "none",
+  "features": "\"cv02\", \"cv03\", \"cv04\", \"cv11\""
+ },
+ "p": {
+  "text": "Invitations you create or join appear here while they remain",
+  "font": "Inter, -apple-system, \"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif",
+  "size": "13px",
+  "weight": "400",
+  "tracking": "normal",
+  "leading": "19.5px",
+  "color": "rgb(161, 169, 185)",
+  "bg": "rgba(0, 0, 0, 0)",
+  "radius": "0px",
+  "padding": "0px",
+  "border": "0px none rgb(161, 169, 185)",
+  "transform": "none",
+  "features": "\"cv02\", \"cv03\", \"cv04\", \"cv11\""
+ },
+ "a": null,
+ "button": {
+  "text": "\u20bf",
+  "font": "Inter, -apple-system, \"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif",
+  "size": "13.3333px",
+  "weight": "400",
+  "tracking": "normal",
+  "leading": "normal",
+  "color": "rgb(255, 255, 255)",
+  "bg": "rgba(0, 0, 0, 0)",
+  "radius": "12px",
+  "padding": "4px",
+  "border": "0px none rgb(255, 255, 255)",
+  "transform": "none",
+  "features": "normal"
+ },
+ "input": null,
+ "loadedFonts": [
+  "Inter"
+ ],
+ "htmlBg": "rgba(0, 0, 0, 0)",
+ "textLen": 548,
+ "height": 939,
+ "url": "https://blaze.xo.cash",
+ "viewport": [
+  1440,
+  900
+ ],
+ "lumaStddev": 16.1
+}
