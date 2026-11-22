@@ -21,10 +21,12 @@ console.log('template', templateIdentifier, 'wallet', toAddress(network, lb));
 const live = async () => (await engine.listUnspentOutputs()).filter((u) => u.status !== 'spent');
 const at = async (txid, index) => (await live()).find((u) => u.outpointTransactionHash === txid && u.outpointIndex === index);
 const plain = async () => (await live()).filter((u) => !u.tokenCategory && !u.tokenAmount && !u.nftCommitment);
-const bigCoin = async () => (await plain()).sort((a, b) => b.valueSatoshis - a.valueSatoshis).find((u) => u.valueSatoshis >= 100000);
+// The lifecycle spends about 30,000 satoshis (FUNDING.md asks for 50,000 on mainnet).
+const MIN_FUND = 35000;
+const bigCoin = async () => (await plain()).sort((a, b) => b.valueSatoshis - a.valueSatoshis).find((u) => u.valueSatoshis >= MIN_FUND);
 // A coin that confirms while headers verify is dropped by the engine (FINDINGS.md 2), so chipnet funds are requested after the engine is live.
 if (network === 'chipnet' && !(await bigCoin())) console.log('faucet', (await requestChipnetSats(toAddress(network, lb), 3000000)).txid);
-const funded = await waitFor(bigCoin, 'wallet funds', 60000);
+const funded = await waitFor(bigCoin, 'wallet funds', network === 'mainnet' ? 600000 : 60000);
 
 let seq = 0;
 const step = async (label, p) => {
