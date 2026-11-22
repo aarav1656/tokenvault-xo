@@ -23,13 +23,6 @@ const hexNibble = '<"0123456789abcdef"> OP_SWAP OP_SPLIT OP_NIP OP_1 OP_SPLIT OP
 const hexByte = 'OP_DUP <16> OP_DIV ' + hexNibble + ' OP_SWAP <16> OP_MOD ' + hexNibble + ' OP_CAT';
 const hexOf = (state) => Array.from({ length: 24 }, (_, i) => '<$(' + state + ' <' + i + '> OP_SPLIT OP_NIP OP_1 OP_SPLIT OP_DROP <0x00> OP_CAT OP_BIN2NUM hexByte)>').reduce((a, b) => a + ' ' + b + ' OP_CAT'.replace(/^ OP_CAT$/, ' OP_CAT'));
 
-// The vault state NFT commitment is three little endian 8 byte numbers: releaseHeight, halvingHeight, reward.
-const stateParts = {
-  stateReleaseHeight: '<stateCommitment> <8> OP_SPLIT OP_DROP OP_BIN2NUM',
-  stateHalvingHeight: '<stateCommitment> <8> OP_SPLIT OP_NIP <8> OP_SPLIT OP_DROP OP_BIN2NUM',
-  stateReward: '<stateCommitment> <16> OP_SPLIT OP_NIP OP_BIN2NUM',
-};
-
 export const tokenVaultTemplate = {
   $schema: 'https://libauth.org/schemas/wallet-template-v0.schema.json',
   name: 'TokenVault',
@@ -66,13 +59,13 @@ export const tokenVaultTemplate = {
     },
     release: {
       ...view('Release tokens', 'Release tokens up to a block height. Spends the token coin, the state NFT and one wallet coin; pays the fund, returns the rest with the next state NFT.', 'release'),
-      roles: fundRole(['tokenCategory', 'stateCategory', 'nextStateCategory', 'stateCommitment', 'blockHeight', 'halvingLength', 'vaultTokens', 'walletSatoshis']),
+      roles: fundRole(['tokenCategory', 'stateCategory', 'nextStateCategory', 'releaseHeight', 'halvingHeight', 'currentReward', 'blockHeight', 'halvingLength', 'vaultTokens', 'walletSatoshis']),
       requirements: oneFund,
       transaction: 'releaseTransaction',
     },
     finalRelease: {
       ...view('Release the remainder', 'End of life: the schedule releases everything that is left. The vault and its state NFT end.', 'release'),
-      roles: fundRole(['tokenCategory', 'stateCategory', 'stateCommitment', 'blockHeight', 'halvingLength', 'vaultTokens', 'walletSatoshis']),
+      roles: fundRole(['tokenCategory', 'stateCategory', 'releaseHeight', 'halvingHeight', 'currentReward', 'blockHeight', 'halvingLength', 'vaultTokens', 'walletSatoshis']),
       requirements: oneFund,
       transaction: 'finalReleaseTransaction',
     },
@@ -220,18 +213,16 @@ export const tokenVaultTemplate = {
     mintUnlock: '<reward> <startHeight> <lockAmount> <lockAmount> <fundKey.schnorr_signature.all_outputs> OP_1',
     reclaimUnlock: '<fundKey.schnorr_signature.all_outputs> OP_0',
     releaseUnlock: '<blockHeight> <fundKey.schnorr_signature.all_outputs>',
-    // State NFT parts, read from the commitment of the state coin being spent.
-    stateReleaseHeight: stateParts.stateReleaseHeight,
-    stateHalvingHeight: stateParts.stateHalvingHeight,
-    stateReward: stateParts.stateReward,
     // Whether the release crosses the next halving, exactly as TokenVault_Release.release() decides it.
-    halvingNow: '<blockHeight> stateHalvingHeight OP_SUB OP_1ADD <halvingLength> OP_GREATERTHANOREQUAL',
-    nextReleaseHeight: 'halvingNow OP_IF stateHalvingHeight <halvingLength> OP_ADD OP_ELSE <blockHeight> OP_ENDIF',
-    nextHalvingHeight: 'halvingNow OP_IF stateHalvingHeight <halvingLength> OP_ADD OP_ELSE stateHalvingHeight OP_ENDIF',
-    nextReward: 'halvingNow OP_IF stateReward OP_2 OP_DIV OP_1 OP_MAX OP_ELSE stateReward OP_ENDIF',
-    releaseAmount: 'nextReleaseHeight stateReleaseHeight OP_SUB halvingNow OP_NOT OP_IF OP_1ADD OP_ENDIF stateReward OP_MUL',
+    halvingNow: '<blockHeight> <halvingHeight> OP_SUB OP_1ADD <halvingLength> OP_GREATERTHANOREQUAL',
+    nextReleaseHeight: 'halvingNow OP_IF <halvingHeight> <halvingLength> OP_ADD OP_ELSE <blockHeight> OP_ENDIF',
+    nextHalvingHeight: 'halvingNow OP_IF <halvingHeight> <halvingLength> OP_ADD OP_ELSE <halvingHeight> OP_ENDIF',
+    nextReward: 'halvingNow OP_IF <currentReward> OP_2 OP_DIV OP_1 OP_MAX OP_ELSE <currentReward> OP_ENDIF',
+    releaseAmount: 'nextReleaseHeight <releaseHeight> OP_SUB halvingNow OP_NOT OP_IF OP_1ADD OP_ENDIF <currentReward> OP_MUL',
     hexByte,
-    stateHex: hexOf('<stateCommitment>'),
+    // The 24 byte commitment of the state coin being spent, rebuilt from its three numbers.
+    stateNow: '<releaseHeight> <8> OP_NUM2BIN <halvingHeight> <8> OP_NUM2BIN OP_CAT <currentReward> <8> OP_NUM2BIN OP_CAT',
+    stateHex: hexOf('stateNow'),
     nextStateHex: hexOf('nextState'),
     mintStateHex: hexOf('mintState'),
     nextState: 'nextReleaseHeight <8> OP_NUM2BIN nextHalvingHeight <8> OP_NUM2BIN OP_CAT nextReward <8> OP_NUM2BIN OP_CAT',
@@ -246,8 +237,10 @@ export const tokenVaultTemplate = {
     tokenCategory: variable('Token category', 'The category of the vault token and its state NFT.', 'token_category'),
     stateCategory: variable('State NFT category', 'The category of the state NFT being spent. Equal to the token category until the first release.', 'token_category'),
     nextStateCategory: variable('Next state NFT category', 'The transaction hash of the fee coin: the next state NFT is a genesis on it.', 'token_category'),
-    stateCommitment: variable('State commitment', 'The 24 byte commitment of the state NFT being spent.', 'bytes'),
-    blockHeight: variable('Release height', 'Release up to this block height. Must not exceed the chain height.', 'integer'),
+    releaseHeight: variable('Release height', 'First field of the state NFT being spent: the height releases continue from.', 'integer'),
+    halvingHeight: variable('Halving height', 'Second field of the state NFT being spent: the height the current halving period started at.', 'integer'),
+    currentReward: variable('Current reward', 'Third field of the state NFT being spent: tokens released per block now.', 'token_amount'),
+    blockHeight: variable('Release up to', 'Release up to this block height. Must not exceed the chain height.', 'integer'),
     vaultTokens: variable('Vault tokens', 'Fungible token amount on the vault token coin being spent.', 'token_amount'),
     walletSatoshis: variable('Fee coin value', 'Satoshis on the wallet coin that pays the fee.', 'satoshis'),
     mintSatoshis: variable('Mint coin value', 'Satoshis sent to the mint covenant.', 'satoshis'),
